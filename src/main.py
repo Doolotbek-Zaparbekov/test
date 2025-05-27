@@ -1,34 +1,60 @@
 import flet as ft
 from database import Database
 
-
 def main(page: ft.Page):
-    page.title = "Рейтинг кинг"
-    title = ft.Text(value="Ваши книги", size=28)
-    page.data = 0
-    db = Database("book.sqlite3")
-    db.create_tables()
+    db = Database("db.sqlite")
+    page.title = "Ваши контакты"
+    page.scroll = "auto"
 
-    def add_book(e):
-        books = f"Книга: {book.value}|Рейтинг: {rating.value}|Прочтено: {reading.value} раз."
-        books_list_area.controls.append(ft.Text(value=books, size=18))
-        db.add_book(book.value, rating.value, reading.value)
-        page.data += 1
-        book.value = ""
-        rating.value = ""
-        reading.value = ""
-        consumption.value = f"Всего книг: {page.data}"
+    сontact_input = ft.TextField(label="Имя контакта", width=180)
+    number_input = ft.TextField(label="Номер телефона", width=180)
+    additionally_input = ft.TextField(label="Дополнительная пометка(может быть пустой)", width=180)
+
+    contacts_list = ft.Column()
+
+    def load_contacts():
+        contacts_list.controls.clear()
+        for contact in db.get_contact():
+            contacts_list.controls.append(
+                ft.Row(
+                    controls=[
+                        ft.Text(f"{contact[1]} | {contact[2]} | {contact[3]}", size=20),
+                        ft.IconButton(
+                            icon=ft.Icons.DELETE,
+                            icon_color=ft.Colors.RED,
+                            on_click=lambda e, id=contact[0]: delete_contact(id)
+                        )
+                    ]
+                )
+            )
         page.update()
 
-    consumption = ft.Text(value=f"Всего книг: {page.data}", size=25)
-    page.update()
-    book = ft.TextField(label="Название книги")
-    rating = ft.TextField(label="Рейтинг книги")
-    reading = ft.TextField(label="Сколько раз прочитано")
-    add_button = ft.ElevatedButton("Добавить", on_click=add_book)
-    form_area = ft.Row(controls=[book, rating, reading, add_button])
-    books_list_area = ft.Column()
-    page.add(title, form_area, consumption, books_list_area)
+    def add_contact(e):
+        if сontact_input.value and number_input.value and additionally_input.value:
+            db.add_contact(сontact_input.value, number_input.value, additionally_input.value)
+            сontact_input.value = ""
+            number_input.value = ""
+            additionally_input.value = ""
+            load_contacts()
 
+    def delete_contact(contact_id):
+        db.delete_contact(contact_id)
+        load_contacts()
 
-ft.app(main)
+    def clear_all(e):
+        db.clear_all()
+        load_contacts()
+
+    add_btn = ft.ElevatedButton("Добавить", on_click=add_contact)
+    clear_btn = ft.ElevatedButton("Очистить всё", on_click=clear_all, bgcolor=ft.Colors.RED, color=ft.Colors.WHITE)
+
+    page.add(
+        ft.Text("Студенты IT Курса GEEK", size=32, weight="bold"),
+        ft.Row([сontact_input, number_input, additionally_input, add_btn]),
+        clear_btn,
+        contacts_list
+    )
+
+    load_contacts()
+
+ft.app(target=main)

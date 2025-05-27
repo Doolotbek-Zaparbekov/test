@@ -2,26 +2,32 @@ import sqlite3
 
 
 class Database:
-    def __init__(self, path: str):
-        self.path = path
+    def __init__(self, path):
+        self.conn = sqlite3.connect(path)
+        self.create_table()
 
-    def create_tables(self):
-        with sqlite3.connect(self.path) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS books(
-                    id INTEGER PRIMARY KEY,
-                    book TEXT NOT NULL,
-                    rating TEXT,
-                    reading TEXT INTEGER
-                    )
+    def create_table(self):
+        self.conn.execute("""
+        CREATE TABLE IF NOT EXISTS contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            contact TEXT NOT NULL,
+            number TEXT NOT NULL,
+            additionally TEXT NOT NULL
+        );
         """)
-            
-    def add_book(self, book: str, rating: int, reading: int):
-        with sqlite3.connect(self.path) as conn:
-            conn.execute(
-                """
-                INSERT INTO books (book, rating, reading) VALUES (?, ?, ?)
-                """,
-                (book, bool(rating), int(reading))
-            )
-            conn.commit()
+        self.conn.commit()
+
+    def add_contact(self, contact, number, additionally):
+        self.conn.execute("INSERT INTO contacts (contact, number, additionally) VALUES (?, ?, ?);", (contact, number, additionally))
+        self.conn.commit()
+
+    def delete_contact(self, id):
+        self.conn.execute("DELETE FROM contacts WHERE id = ?;", (id,))
+        self.conn.commit()
+
+    def get_contact(self):
+        return self.conn.execute("SELECT * FROM contacts;").fetchall()
+
+    def clear_all(self):
+        self.conn.execute("DELETE FROM contacts;")
+        self.conn.commit()
